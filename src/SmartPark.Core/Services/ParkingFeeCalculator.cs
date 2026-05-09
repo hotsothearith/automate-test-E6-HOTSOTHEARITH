@@ -60,7 +60,10 @@ public class ParkingFeeCalculator
         bool isLostTicket = false,
         bool isHoliday = false)
     {
-        
+        // Step 1: Validate
+        if (checkOut < checkIn)
+            throw new ArgumentException(
+                "checkOut cannot be before checkIn", nameof(checkOut));
         // TODO: Implement the 9-step fee calculation using TDD.
         // Write a failing test first (RED), then implement just enough to pass (GREEN).
         throw new NotImplementedException(

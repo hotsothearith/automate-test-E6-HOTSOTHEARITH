@@ -64,7 +64,20 @@ public class ParkingFeeCalculator
         if (checkOut < checkIn)
             throw new ArgumentException(
                 "checkOut cannot be before checkIn", nameof(checkOut));
-        
+        var totalMinutes = (checkOut - checkIn).TotalMinutes;
+        if (totalMinutes <= GracePeriodMinutes)
+        {
+            var penalty = isLostTicket ? LostTicketPenalty : 0m;
+            return new ParkingFeeResult
+            {
+                TotalFee          = penalty,
+                BaseFee           = 0m,
+                SurchargeAmount   = 0m,
+                DiscountAmount    = 0m,
+                LostTicketPenalty = penalty,
+                Breakdown         = $"Grace period. Penalty: {penalty}"
+            };
+        }
         // TODO: Implement the 9-step fee calculation using TDD.
         // Write a failing test first (RED), then implement just enough to pass (GREEN).
         throw new NotImplementedException(

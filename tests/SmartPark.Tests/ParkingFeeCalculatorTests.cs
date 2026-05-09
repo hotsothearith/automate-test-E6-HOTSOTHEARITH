@@ -28,6 +28,16 @@ public class ParkingFeeCalculatorTests
         Assert.Equal(0m, result.TotalFee);
     }
 
+    [Fact]
+public void CalculateFee_CheckOutBeforeCheckIn_ThrowsArgumentException()
+{
+    var checkIn  = new DateTime(2026, 3, 16, 10, 0, 0);
+    var checkOut = new DateTime(2026, 3, 16,  8, 0, 0);
+
+    Assert.Throws<ArgumentException>(() =>
+        _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut));
+}
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios

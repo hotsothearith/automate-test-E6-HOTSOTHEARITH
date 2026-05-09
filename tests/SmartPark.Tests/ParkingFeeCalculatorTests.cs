@@ -72,6 +72,20 @@ public class ParkingFeeCalculatorTests
             vehicleType, MembershipTier.Guest, checkIn, checkOut);
         Assert.Equal(expectedFee, result.TotalFee);
     }
+
+    [Theory]
+    [InlineData(VehicleType.Motorcycle, 10,  4_000)]
+    [InlineData(VehicleType.Car,        12,  8_000)]
+    [InlineData(VehicleType.SUV,        24, 12_000)]
+    public void CalculateFee_DailyCap_BaseFeeDoesNotExceedCap(
+        VehicleType vehicleType, int hours, decimal expectedCap)
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 9, 0, 0); // Monday
+        var checkOut = checkIn.AddHours(hours);
+        var result = _calculator.CalculateFee(
+            vehicleType, MembershipTier.Guest, checkIn, checkOut);
+        Assert.Equal(expectedCap, result.BaseFee);
+    }
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios

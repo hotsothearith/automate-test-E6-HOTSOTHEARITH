@@ -91,14 +91,23 @@ public class ParkingFeeCalculator
             VehicleType.SUV        => SuvRatePerHour,
             _ => throw new ArgumentException("Unknown vehicle type")
         };
-        var baseFee = (decimal)billableHours * hourlyRate;
 
+        var dailyCap = vehicleType switch
+        {
+            VehicleType.Motorcycle => MotorcycleDailyCap,
+            VehicleType.Car        => CarDailyCap,
+            VehicleType.SUV        => SuvDailyCap,
+            _ => decimal.MaxValue
+        };
+        var baseFee = Math.Min((decimal)billableHours * hourlyRate, dailyCap);
         return new ParkingFeeResult
         {
             TotalFee = baseFee,
             BaseFee  = baseFee,
             Breakdown = $"Base:{baseFee}"
         };
+        
+        
         // TODO: Implement the 9-step fee calculation using TDD.
         // Write a failing test first (RED), then implement just enough to pass (GREEN) a.
         throw new NotImplementedException(

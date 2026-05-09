@@ -29,15 +29,35 @@ public class ParkingFeeCalculatorTests
     }
 
     [Fact]
-public void CalculateFee_CheckOutBeforeCheckIn_ThrowsArgumentException()
-{
-    var checkIn  = new DateTime(2026, 3, 16, 10, 0, 0);
-    var checkOut = new DateTime(2026, 3, 16,  8, 0, 0);
+    public void CalculateFee_CheckOutBeforeCheckIn_ThrowsArgumentException()
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 10, 0, 0);
+        var checkOut = new DateTime(2026, 3, 16,  8, 0, 0);
 
-    Assert.Throws<ArgumentException>(() =>
-        _calculator.CalculateFee(
-            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut));
-}
+        Assert.Throws<ArgumentException>(() =>
+            _calculator.CalculateFee(
+                VehicleType.Car, MembershipTier.Guest, checkIn, checkOut));
+    }
+
+    [Fact]
+    public void CalculateFee_GracePeriod_Exactly30Min_ReturnsFree()
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 10, 0, 0);
+        var checkOut = checkIn.AddMinutes(30);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut);
+        Assert.Equal(0m, result.TotalFee);
+    }
+
+    [Fact]
+    public void CalculateFee_GracePeriod_31Min_ChargesOneHour()
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 10, 0, 0);
+        var checkOut = checkIn.AddMinutes(31);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut);
+        Assert.Equal(1_000m, result.TotalFee);
+    }
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios

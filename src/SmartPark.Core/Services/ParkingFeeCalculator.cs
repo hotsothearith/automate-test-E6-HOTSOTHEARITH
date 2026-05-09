@@ -53,66 +53,95 @@ public class ParkingFeeCalculator
     ///   9. Total: baseFee + surcharge − discount + overnight + penalty (min 0)
     /// </remarks>
     public ParkingFeeResult CalculateFee(
-        VehicleType vehicleType,
-        MembershipTier membership,
-        DateTime checkIn,
-        DateTime checkOut,
-        bool isLostTicket = false,
-        bool isHoliday = false)
+    VehicleType vehicleType,
+    MembershipTier membership,
+    DateTime checkIn,
+    DateTime checkOut,
+    bool isLostTicket = false,
+    bool isHoliday = false)
+{
+    // Step 1: Validate
+    if (checkOut < checkIn)
+        throw new ArgumentException(
+            "checkOut cannot be before checkIn", nameof(checkOut));
+
+    // Step 2: Grace period
+    var totalMinutes = (checkOut - checkIn).TotalMinutes;
+
+    if (totalMinutes <= GracePeriodMinutes)
     {
-        // Step 1: Validate
-        if (checkOut < checkIn)
-            throw new ArgumentException(
-                "checkOut cannot be before checkIn", nameof(checkOut));
-        var totalMinutes = (checkOut - checkIn).TotalMinutes;
-        if (totalMinutes <= GracePeriodMinutes)
-        {
-            var penalty = isLostTicket ? LostTicketPenalty : 0m;
-            return new ParkingFeeResult
-            {
-                TotalFee          = penalty,
-                BaseFee           = 0m,
-                SurchargeAmount   = 0m,
-                DiscountAmount    = 0m,
-                LostTicketPenalty = penalty,
-                Breakdown         = $"Grace period. Penalty: {penalty}"
-            };
-        }
-        // Step 3: Billable hours
-        var billableHours = Math.Ceiling(
-            (totalMinutes - GracePeriodMinutes) / 60.0);
-        if (billableHours < 1) billableHours = 1;
+        var penalty = isLostTicket ? LostTicketPenalty : 0m;
 
-        // Step 4: Base fee
-        var hourlyRate = vehicleType switch
-        {
-            VehicleType.Motorcycle => MotorcycleRatePerHour,
-            VehicleType.Car        => CarRatePerHour,
-            VehicleType.SUV        => SuvRatePerHour,
-            _ => throw new ArgumentException("Unknown vehicle type")
-        };
-
-        var dailyCap = vehicleType switch
-        {
-            VehicleType.Motorcycle => MotorcycleDailyCap,
-            VehicleType.Car        => CarDailyCap,
-            VehicleType.SUV        => SuvDailyCap,
-            _ => decimal.MaxValue
-        };
-        var baseFee = Math.Min((decimal)billableHours * hourlyRate, dailyCap);
         return new ParkingFeeResult
         {
-            TotalFee = baseFee,
-            BaseFee  = baseFee,
-            Breakdown = $"Base:{baseFee}"
+            TotalFee = penalty,
+            BaseFee = 0m,
+            SurchargeAmount = 0m,
+            DiscountAmount = 0m,
+            LostTicketPenalty = penalty,
+            Breakdown = $"Grace period. Penalty: {penalty:N0} KHR"
         };
-        
-        
-        // TODO: Implement the 9-step fee calculation using TDD.
-        // Write a failing test first (RED), then implement just enough to pass (GREEN) a.
-        throw new NotImplementedException(
-            "Implement this method using TDD — see the assignment spec for the 9-step calculation flow.");
     }
 
-    
+    // Step 3: Billable hours
+    var billableHours = Math.Ceiling(
+        (totalMinutes - GracePeriodMinutes) / 60.0);
+
+    if (billableHours < 1)
+        billableHours = 1;
+
+    // Step 4: Hourly rate
+    var hourlyRate = vehicleType switch
+    {
+        VehicleType.Motorcycle => MotorcycleRatePerHour,
+        VehicleType.Car => CarRatePerHour,
+        VehicleType.SUV => SuvRatePerHour,
+        _ => throw new ArgumentException("Unknown vehicle type")
+    };
+
+    // Step 4: Daily cap
+    var dailyCap = vehicleType switch
+    {
+        VehicleType.Motorcycle => MotorcycleDailyCap,
+        VehicleType.Car => CarDailyCap,
+        VehicleType.SUV => SuvDailyCap,
+        _ => throw new ArgumentException("Unknown vehicle type")
+    };
+
+    var baseFee = Math.Min((decimal)billableHours * hourlyRate, dailyCap);
+
+    // Step 5: Overnight fee
+    var overnightFee = GoesPastOvernightThreshold(checkIn, checkOut)
+        ? OvernightFlatFee
+        : 0m;
+
+    return new ParkingFeeResult
+    {
+        TotalFee = baseFee + overnightFee,
+        BaseFee = baseFee,
+        SurchargeAmount = 0m,
+        DiscountAmount = 0m,
+        LostTicketPenalty = 0m,
+        Breakdown = $"Base Fee: {baseFee:N0} KHR; Overnight Fee: {overnightFee:N0} KHR"
+    };
 }
+
+
+    private static bool GoesPastOvernightThreshold(DateTime checkIn, DateTime checkOut)
+    {
+        var currentDate = checkIn.Date;
+
+        while (currentDate <= checkOut.Date)
+        {
+            var tenPm = currentDate.AddHours(OvernightHourThreshold);
+
+            if (checkIn < tenPm && checkOut > tenPm)
+                return true;
+
+            currentDate = currentDate.AddDays(1);
+        }
+
+        return false;
+    }
+}
+

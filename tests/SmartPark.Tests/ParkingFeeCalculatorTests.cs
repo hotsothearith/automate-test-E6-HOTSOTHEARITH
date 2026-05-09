@@ -86,6 +86,26 @@ public class ParkingFeeCalculatorTests
             vehicleType, MembershipTier.Guest, checkIn, checkOut);
         Assert.Equal(expectedCap, result.BaseFee);
     }
+
+    [Fact]
+    public void CalculateFee_Overnight_SessionCrosses10PM_AddsOvernightFee()
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 20, 0, 0); // 8 PM
+        var checkOut = new DateTime(2026, 3, 16, 23, 0, 0); // 11 PM
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut);
+        Assert.Equal(5_000m, result.TotalFee); // 3h base + 2000 overnight
+    }
+
+    [Fact]
+    public void CalculateFee_Overnight_DaytimeSession_NoOvernightFee()
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 9,  0, 0);
+        var checkOut = new DateTime(2026, 3, 16, 17, 0, 0);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut);
+        Assert.Equal(8_000m, result.TotalFee); // capped at daily cap
+    }
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios

@@ -78,6 +78,27 @@ public class ParkingFeeCalculator
                 Breakdown         = $"Grace period. Penalty: {penalty}"
             };
         }
+        // Step 3: Billable hours
+        var billableHours = Math.Ceiling(
+            (totalMinutes - GracePeriodMinutes) / 60.0);
+        if (billableHours < 1) billableHours = 1;
+
+        // Step 4: Base fee
+        var hourlyRate = vehicleType switch
+        {
+            VehicleType.Motorcycle => MotorcycleRatePerHour,
+            VehicleType.Car        => CarRatePerHour,
+            VehicleType.SUV        => SuvRatePerHour,
+            _ => throw new ArgumentException("Unknown vehicle type")
+        };
+        var baseFee = (decimal)billableHours * hourlyRate;
+
+        return new ParkingFeeResult
+        {
+            TotalFee = baseFee,
+            BaseFee  = baseFee,
+            Breakdown = $"Base:{baseFee}"
+        };
         // TODO: Implement the 9-step fee calculation using TDD.
         // Write a failing test first (RED), then implement just enough to pass (GREEN).
         throw new NotImplementedException(

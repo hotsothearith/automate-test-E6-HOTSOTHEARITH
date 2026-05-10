@@ -122,16 +122,26 @@ if (isHoliday)
 else if (checkIn.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
     surcharge = baseFee * WeekendSurchargeRate;
 
+// Step 7: Membership discount
+var discountRate = membership switch
+{
+    MembershipTier.Silver   => SilverDiscountRate,
+    MembershipTier.Gold     => GoldDiscountRate,
+    MembershipTier.Platinum => PlatinumDiscountRate,
+    _                       => 0m
+};
+var discount = (baseFee + surcharge) * discountRate;
 return new ParkingFeeResult
 {
-    TotalFee = baseFee + surcharge + overnightFee,
+    TotalFee = baseFee + surcharge - discount + overnightFee,
     BaseFee = baseFee,
     SurchargeAmount = surcharge,
-    DiscountAmount = 0m,
+    DiscountAmount = discount,
     LostTicketPenalty = 0m,
     Breakdown =
         $"Base Fee: {baseFee:N0} KHR; " +
         $"Surcharge: {surcharge:N0} KHR; " +
+        $"Discount: {discount:N0} KHR; " +
         $"Overnight Fee: {overnightFee:N0} KHR"
 };
 

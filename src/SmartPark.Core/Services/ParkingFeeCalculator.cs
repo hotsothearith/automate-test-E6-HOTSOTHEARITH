@@ -108,23 +108,33 @@ public class ParkingFeeCalculator
         _ => throw new ArgumentException("Unknown vehicle type")
     };
 
-    var baseFee = Math.Min((decimal)billableHours * hourlyRate, dailyCap);
-
-    // Step 5: Overnight fee
-    var overnightFee = GoesPastOvernightThreshold(checkIn, checkOut)
-        ? OvernightFlatFee
-        : 0m;
-
     
-    return new ParkingFeeResult
-    {
-        TotalFee = baseFee + overnightFee,
-        BaseFee = baseFee,
-        SurchargeAmount = 0m,
-        DiscountAmount = 0m,
-        LostTicketPenalty = 0m,
-        Breakdown = $"Base Fee: {baseFee:N0} KHR; Overnight Fee: {overnightFee:N0} KHR"
-    };
+var baseFee = Math.Min((decimal)billableHours * hourlyRate, dailyCap);
+
+var overnightFee = GoesPastOvernightThreshold(checkIn, checkOut)
+    ? OvernightFlatFee
+    : 0m;
+
+var surcharge = 0m;
+
+if (isHoliday)
+    surcharge = baseFee * HolidaySurchargeRate;
+else if (checkIn.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+    surcharge = baseFee * WeekendSurchargeRate;
+
+return new ParkingFeeResult
+{
+    TotalFee = baseFee + surcharge + overnightFee,
+    BaseFee = baseFee,
+    SurchargeAmount = surcharge,
+    DiscountAmount = 0m,
+    LostTicketPenalty = 0m,
+    Breakdown =
+        $"Base Fee: {baseFee:N0} KHR; " +
+        $"Surcharge: {surcharge:N0} KHR; " +
+        $"Overnight Fee: {overnightFee:N0} KHR"
+};
+
 }
 
 

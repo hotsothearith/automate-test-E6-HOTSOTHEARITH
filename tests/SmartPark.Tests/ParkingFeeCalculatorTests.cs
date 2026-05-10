@@ -106,6 +106,27 @@ public class ParkingFeeCalculatorTests
             VehicleType.Car, MembershipTier.Guest, checkIn, checkOut);
         Assert.Equal(8_000m, result.TotalFee); // capped at daily cap
     }
+    [Fact]
+    public void CalculateFee_WeekendSurcharge_Saturday_AddsTwentyPercent()
+    {
+        var checkIn  = new DateTime(2026, 3, 21, 9, 0, 0); // Saturday
+        var checkOut = checkIn.AddHours(2);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut);
+        Assert.Equal(2_400m, result.TotalFee);
+        Assert.Equal(400m,   result.SurchargeAmount);
+    }
+
+    [Fact]
+    public void CalculateFee_HolidaySurcharge_TakesPriorityOverWeekend()
+    {
+        var checkIn  = new DateTime(2026, 3, 21, 9, 0, 0); // Saturday + holiday
+        var checkOut = checkIn.AddHours(2);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut,
+            isHoliday: true);
+        Assert.Equal(3_000m, result.TotalFee); // 50% only, NOT 20%+50%
+    }
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios

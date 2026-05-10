@@ -115,6 +115,7 @@ public class ParkingFeeCalculator
         ? OvernightFlatFee
         : 0m;
 
+    
     return new ParkingFeeResult
     {
         TotalFee = baseFee + overnightFee,

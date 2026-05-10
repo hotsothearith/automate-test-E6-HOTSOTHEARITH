@@ -140,6 +140,30 @@ public class ParkingFeeCalculatorTests
             VehicleType.Car, tier, checkIn, checkOut);
         Assert.Equal(expectedFee, result.TotalFee);
     }
+
+    [Fact]
+    public void CalculateFee_LostTicket_AddsPenalty()
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 9, 0, 0);
+        var checkOut = checkIn.AddHours(2);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut,
+            isLostTicket: true);
+        Assert.Equal(22_000m, result.TotalFee);
+        Assert.Equal(20_000m, result.LostTicketPenalty);
+    }
+
+    [Fact]
+    public void CalculateFee_LostTicket_DuringGracePeriod_OnlyPenalty()
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 9, 0, 0);
+        var checkOut = checkIn.AddMinutes(30);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, MembershipTier.Guest, checkIn, checkOut,
+            isLostTicket: true);
+        Assert.Equal(20_000m, result.TotalFee);
+        Assert.Equal(0m,      result.BaseFee);
+    }
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios

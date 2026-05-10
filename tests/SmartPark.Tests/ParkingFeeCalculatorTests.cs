@@ -450,7 +450,7 @@ public class ParkingFeeCalculatorTests
         });
     }
 
-    // Property 5: BaseFee never exceeds daily cap for any vehicle
+    // Property 5: BaseFee never exceeds daily cap for any vehicles
     [Property]
     public Property DailyCapNeverExceeded()
     {

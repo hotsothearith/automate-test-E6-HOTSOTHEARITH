@@ -131,19 +131,30 @@ var discountRate = membership switch
     _                       => 0m
 };
 var discount = (baseFee + surcharge) * discountRate;
+
+// Step 8: Lost ticket penalty
+var lostPenalty = isLostTicket ? LostTicketPenalty : 0m;
+
+// Step 9: Total — never negative
+var total = Math.Max(0m,
+    baseFee + surcharge - discount + overnightFee + lostPenalty);
+
 return new ParkingFeeResult
 {
-    TotalFee = baseFee + surcharge - discount + overnightFee,
+    TotalFee = total,
     BaseFee = baseFee,
     SurchargeAmount = surcharge,
     DiscountAmount = discount,
-    LostTicketPenalty = 0m,
+    LostTicketPenalty = lostPenalty,
     Breakdown =
-        $"Base Fee: {baseFee:N0} KHR; " +
+        $"Base: {baseFee:N0} KHR; " +
         $"Surcharge: {surcharge:N0} KHR; " +
         $"Discount: {discount:N0} KHR; " +
-        $"Overnight Fee: {overnightFee:N0} KHR"
+        $"Overnight: {overnightFee:N0} KHR; " +
+        $"LostTicket: {lostPenalty:N0} KHR; " +
+        $"Total: {total:N0} KHR"
 };
+
 
 }
 

@@ -127,6 +127,19 @@ public class ParkingFeeCalculatorTests
             isHoliday: true);
         Assert.Equal(3_000m, result.TotalFee); // 50% only, NOT 20%+50%
     }
+    [Theory]
+    [InlineData(MembershipTier.Silver,   1_800)]
+    [InlineData(MembershipTier.Gold,     1_500)]
+    [InlineData(MembershipTier.Platinum, 1_200)]
+    public void CalculateFee_MembershipDiscount_ReducesFee(
+        MembershipTier tier, decimal expectedFee)
+    {
+        var checkIn  = new DateTime(2026, 3, 16, 9, 0, 0); // Monday
+        var checkOut = checkIn.AddHours(2);
+        var result = _calculator.CalculateFee(
+            VehicleType.Car, tier, checkIn, checkOut);
+        Assert.Equal(expectedFee, result.TotalFee);
+    }
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios
